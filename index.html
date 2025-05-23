@@ -1,27 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
-  </head>
-  <body>
-    <div id="app" class="p-8 flex flex-col gap-4">
-      <div class="p-4 border border-neutral-300 rounded-sm w-96">
-        <h1 class="font-bold text-nowrap flex justify-between">
-          <span> Green Dolphin Testing </span>
-          <span class="text-emerald-700">༝﹡˖˟ ⸜₍⁽ˊ꒳ˋ⁾₎⸝ ༝﹡˖˟ </span>
-        </h1>
-      </div>
-      <audio
-        src="Wynton Kelly - On Green Dolphin Street.mp3"
-        controls
-        class="w-96 rounded-sm"
-      ></audio>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + TS</title>
+</head>
+
+<body>
+  <div id="app" class="p-8 flex flex-col gap-4">
+    <div class="p-4 border border-neutral-300 rounded-sm w-96">
+      <h1 class="font-bold text-nowrap flex justify-between">
+        <span> Green Dolphin Testing </span>
+        <span class="text-emerald-700">༝﹡˖˟ ⸜₍⁽ˊ꒳ˋ⁾₎⸝ ༝﹡˖˟ </span>
+      </h1>
+    </div>
+    <audio src="Wynton Kelly - On Green Dolphin Street.mp3" controls class="w-96 rounded-sm"></audio>
+    <div class="flex gap-2">
       <button data-playing="false" role="switch" aria-checked="false">
         <p>Play/Pause</p>
       </button>
+      <div class="flex flex-col">
+        <label for="volume">volume</label>
+        <input type="range" id="volume" name="volume" min="0" max="2" value="1" step="0.01" />
+      </div>
+      <div class="flex flex-col">
+        <label for="pan">pan</label>
+        <input type="range" id="pan" name="pan" min="-1" max="1" value="0" step="0.01" />
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
-  </body>
+</body>
+
 </html>

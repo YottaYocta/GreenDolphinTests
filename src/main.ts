@@ -6,7 +6,14 @@ const audioElement = document.querySelector("audio");
 
 const track = audioContext.createMediaElementSource(audioElement!);
 
-track.connect(audioContext.destination);
+const gainNode = audioContext.createGain();
+
+const steropannerNode = audioContext.createStereoPanner();
+
+track
+  .connect(gainNode)
+  .connect(steropannerNode)
+  .connect(audioContext.destination);
 
 const playbutton = document.querySelector("button");
 
@@ -22,6 +29,18 @@ playbutton?.addEventListener("click", () => {
     audioElement?.pause();
     playbutton.dataset.playing = "false";
   }
+});
+
+const volumeControl: HTMLInputElement = document.querySelector("#volume")!;
+
+volumeControl.addEventListener("input", () => {
+  gainNode.gain.value = +volumeControl.value;
+});
+
+const panControl: HTMLInputElement = document.querySelector("#pan")!;
+
+panControl.addEventListener("input", () => {
+  steropannerNode.pan.value = +panControl.value;
 });
 
 audioElement?.addEventListener("ended", () => {

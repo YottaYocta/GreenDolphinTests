@@ -3,9 +3,10 @@
 @layer base {
   button {
     border: 1px var(--color-neutral-300) solid;
+    height: min-content;
     width: min-content;
     text-wrap-mode: nowrap;
-    padding: 16px;
+    padding: 8px;
     border-radius: var(--radius-sm);
     background-color: var(--color-white);
   }
