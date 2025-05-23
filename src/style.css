@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+@layer base {
+  button {
+    border: 1px var(--color-neutral-300) solid;
+    width: min-content;
+    text-wrap-mode: nowrap;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-white);
+  }
+
+  button:hover {
+    background-color: var(--color-neutral-50);
+    cursor: pointer;
+  }
+}
