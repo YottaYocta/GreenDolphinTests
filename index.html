@@ -6,13 +6,26 @@
     <title>Vite + TS</title>
   </head>
   <body>
-    <div id="app" class="p-8">
-      <div class="p-4 border border-neutral-300 rounded-sm w-min">
-        <h1 class="font-bold text-nowrap">
-          Green Dolphin Testing &nbsp;&nbsp;&nbsp;
+    <div id="app" class="p-8 flex flex-col gap-4">
+      <div class="p-4 border border-neutral-300 rounded-sm w-96">
+        <h1 class="font-bold text-nowrap flex justify-between">
+          <span> Green Dolphin Testing </span>
           <span class="text-emerald-700">༝﹡˖˟ ⸜₍⁽ˊ꒳ˋ⁾₎⸝ ༝﹡˖˟ </span>
         </h1>
       </div>
+      <audio
+        src="Wynton Kelly - On Green Dolphin Street.mp3"
+        controls
+        class="w-96 rounded-sm"
+      ></audio>
+      <button
+        data-playing="false"
+        role="switch"
+        aria-checked="false"
+        class="w-min text-nowrap border border-neutral-300 rounded-sm p-2 cursor-pointer hover:bg-neutral-100 bg-neutral-50"
+      >
+        <p>Play/Pause</p>
+      </button>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
