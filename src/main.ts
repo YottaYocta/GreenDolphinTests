@@ -10,6 +10,7 @@ const oscillator = audioContext.createOscillator();
 const oscillatorGainNode = audioContext.createGain(); // This gain node will be for the oscillator
 
 oscillator.frequency.value = 440;
+
 let oscillatorStarted = false;
 let oscillatorIsPlaying = false;
 let oscillatorGain = 0.2;
@@ -35,11 +36,6 @@ const setOscillatorGain = (gain: number) => {
 const steropannerNode = audioContext.createStereoPanner();
 
 const analyzerNode = audioContext.createAnalyser();
-analyzerNode.minDecibels = -90;
-analyzerNode.maxDecibels = -10;
-analyzerNode.smoothingTimeConstant = 0.85;
-
-analyzerNode.fftSize = 16384 / 2;
 
 track.connect(analyzerNode).connect(audioContext.destination);
 
@@ -51,9 +47,23 @@ oscillator
 
 // analysis
 
-const bufferLength = analyzerNode.frequencyBinCount;
-document.querySelector("#buffer-length")!.innerHTML =
-  "Buffer Length: " + bufferLength;
+analyzerNode.minDecibels = -90;
+analyzerNode.maxDecibels = -10;
+analyzerNode.smoothingTimeConstant = 0.1;
+
+let bufferLength = 0;
+
+const setFFTSize = (size: number) => {
+  analyzerNode.fftSize = size;
+  bufferLength = analyzerNode.frequencyBinCount;
+  document.querySelector("#buffer-length")!.innerHTML =
+    "Buffer Length: " + bufferLength;
+};
+
+setFFTSize(8192);
+
+document.querySelector("#sample-rate")!.innerHTML =
+  "Sample Rate: " + audioContext.sampleRate;
 
 const timeDomainData = new Uint8Array(bufferLength);
 const timeDomainCanvas: HTMLCanvasElement = document.getElementById(
@@ -69,6 +79,7 @@ const frequencyCtx = frequencyCanvas.getContext("2d")!;
 const draw = () => {
   requestAnimationFrame(draw);
   analyzerNode.getByteTimeDomainData(timeDomainData);
+
   timeDomainCtx.fillStyle = "rgb(200 200 200)";
   timeDomainCtx.fillRect(0, 0, timeDomainCanvas.width, timeDomainCanvas.height);
 
@@ -122,17 +133,15 @@ draw();
 
 // Event Listeners
 
-const playbutton = document.querySelector("button");
+const toggleDroneButton = document.querySelector("button");
 
 const volumeControl: HTMLInputElement = document.querySelector("#volume")!;
 volumeControl.value = "" + oscillatorGain;
 const panControl: HTMLInputElement = document.querySelector("#pan")!;
 
-// Initialize oscillator gain to 0 on load (so it doesn't play immediately)
 oscillatorGainNode.gain.value = 0;
-// Initialize main track gain to the volume control value on load
 
-playbutton?.addEventListener("click", () => {
+toggleDroneButton?.addEventListener("click", () => {
   if (audioContext.state === "suspended") {
     audioContext.resume();
   }
@@ -147,3 +156,25 @@ volumeControl.addEventListener("input", () => {
 panControl.addEventListener("input", () => {
   steropannerNode.pan.value = +panControl.value;
 });
+
+const selectFFTSize: HTMLSelectElement = document.querySelector("#fft-size")!;
+selectFFTSize.addEventListener("input", () => {
+  setFFTSize(+selectFFTSize.value);
+});
+
+const frequencyControl: HTMLInputElement =
+  document.querySelector("#drone-frequency")!;
+const numeratorControl: HTMLInputElement =
+  document.querySelector("#numerator")!;
+const denominatorControl: HTMLInputElement =
+  document.querySelector("#denominator")!;
+
+const updateFrequency = () => {
+  oscillator.frequency.value =
+    +frequencyControl.value *
+    (+numeratorControl.value / +denominatorControl.value);
+};
+
+frequencyControl.addEventListener("input", updateFrequency);
+numeratorControl.addEventListener("input", updateFrequency);
+denominatorControl.addEventListener("input", updateFrequency);

@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @layer base {
-  button {
+  button,
+  select {
     border: 1px var(--color-neutral-300) solid;
     height: min-content;
     width: min-content;
@@ -11,7 +12,8 @@
     background-color: var(--color-white);
   }
 
-  button:hover {
+  button:hover,
+  select:hover {
     background-color: var(--color-neutral-50);
     cursor: pointer;
   }
@@ -25,6 +27,15 @@
     text-wrap-mode: nowrap;
     padding: 8px;
     border-radius: 10000px;
+    background-color: var(--color-white);
+  }
+  .card {
+    border: 1px var(--color-neutral-300) solid;
+    height: min-content;
+    width: min-content;
+    text-wrap-mode: nowrap;
+    padding: 8px;
+    border-radius: var(--radius-sm);
     background-color: var(--color-white);
   }
 }

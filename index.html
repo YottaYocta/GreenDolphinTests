@@ -1,42 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vite + TS</title>
-</head>
-
-<body>
-  <div id="app" class="flex flex-col items-center">
-    <div class="p-8 flex flex-col gap-4 max-w-3xl w-full">
-      <div class="p-4 border border-neutral-300 rounded-sm w-full">
-        <h1 class="font-bold text-nowrap flex justify-between">
-          <span> Green Dolphin Testing </span>
-          <span class="text-emerald-700">༝﹡˖˟ ⸜₍⁽ˊ꒳ˋ⁾₎⸝ ༝﹡˖˟ </span>
-        </h1>
-      </div>
-      <audio src="Wynton Kelly - On Green Dolphin Street.mp3" controls class="w-full rounded-sm"></audio>
-      <div class="flex items-center w-full justify-between">
-        <button data-playing="false" role="switch" aria-checked="false">
-          <p>Toggle Drone</p>
-        </button>
-        <div class="flex flex-col w-48">
-          <label for="volume">volume</label>
-          <input type="range" id="volume" name="volume" min="0" max="0.4" step="0.01" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <body class="bg-neutral-50">
+    <div id="app" class="flex flex-col items-center">
+      <div class="p-8 flex flex-col gap-4 max-w-5xl w-full">
+        <div class="card w-full p-4">
+          <h1 class="font-bold text-nowrap flex justify-between">
+            <span> Green Dolphin Testing </span>
+            <span class="text-emerald-700">༝﹡˖˟ ⸜₍⁽ˊ꒳ˋ⁾₎⸝ ༝﹡˖˟ </span>
+          </h1>
         </div>
-        <div class="flex flex-col w-48">
-          <label for="pan">pan</label>
-          <input type="range" id="pan" name="pan" min="-1" max="1" value="0" step="0.01" />
+        <div class="flex flex-col gap-2 card w-full">
+          <div class="flex gap-2 w-full">
+            <audio
+              src="Wynton Kelly - On Green Dolphin Street.mp3"
+              controls
+              class="w-full rounded-sm"
+            ></audio>
+          </div>
         </div>
-        <p id="buffer-length" class="chip"></p>
+        <div class="flex items-center w-full justify-between card">
+          <button data-playing="false" role="switch" aria-checked="false">
+            Toggle Drone
+          </button>
+          <div class="flex gap-2 items-center">
+            <label for="drone-frequency">base frequency: </label>
+            <input
+              type="number"
+              id="drone-frequency"
+              name="drone-frequency"
+              class="chip w-24"
+              value="440"
+            />
+            <span>x</span>
+            <div class="flex flex-col gap-2">
+              <div class="flex gap-2 items-center">
+                <input
+                  type="number"
+                  id="numerator"
+                  name="numerator"
+                  aria-label="frequency multiplier numerator"
+                  class="chip w-16"
+                  value="1"
+                />
+              </div>
+              <hr />
+              <div class="flex gap-2 items-center">
+                <input
+                  type="number"
+                  id="denominator"
+                  name="denominator"
+                  aria-label="frequency multiplier denominator"
+                  class="chip w-16"
+                  value="1"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-col w-48">
+              <label for="volume">volume</label>
+              <input
+                type="range"
+                id="volume"
+                name="volume"
+                min="0"
+                max="0.4"
+                step="0.01"
+              />
+            </div>
+            <div class="flex flex-col w-48">
+              <label for="pan">pan</label>
+              <input
+                type="range"
+                id="pan"
+                name="pan"
+                min="-1"
+                max="1"
+                value="0"
+                step="0.01"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="w-full flex justify-between card">
+          <div class="flex flex-col gap-2 w-full">
+            <div class="flex gap-2 items-center justify-between">
+              <div class="flex gap-2">
+                <span id="buffer-length" class="chip"></span>
+                <span id="sample-rate" class="chip"></span>
+              </div>
+              <div class="flex gap-2 items-center">
+                <label for="fft-size">FFT Size: </label>
+                <select name="fft-size" id="fft-size">
+                  <option value="2048">2048</option>
+                  <option value="4096">4096</option>
+                  <option value="8192">8192</option>
+                  <option value="16384">16384</option>
+                  <option value="32768">32768</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex w-full gap-2 flex-col md:flex-row">
+              <canvas id="oscilloscope" class="w-full rounded-sm"></canvas>
+              <canvas id="frequency" class="w-full rounded-sm"></canvas>
+            </div>
+          </div>
+        </div>
+        <script type="module" src="/src/main.ts"></script>
       </div>
-      <div class="flex flex-col gap-2">
-        <canvas id="oscilloscope" class="w-full"></canvas>
-        <canvas id="frequency" class="w-full"></canvas>
-      </div>
-      <script type="module" src="/src/main.ts"></script>
     </div>
-</body>
-
+  </body>
 </html>
