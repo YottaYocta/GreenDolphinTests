@@ -111,7 +111,7 @@ const draw = () => {
   frequencyCtx.fillStyle = "rgb(0 0 0)";
   frequencyCtx.fillRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
 
-  const barWidth = (frequencyCanvas.width / bufferLength) * 15;
+  const barWidth = (frequencyCanvas.width / bufferLength) * 8;
   let posX = 0;
 
   for (let i = 0; i < bufferLength; i++) {
@@ -149,15 +149,18 @@ toggleDroneButton?.addEventListener("click", () => {
   setOscillatorIsPlaying(!oscillatorIsPlaying);
 });
 
+setOscillatorGain(+volumeControl.value);
 volumeControl.addEventListener("input", () => {
   setOscillatorGain(+volumeControl.value);
 });
 
+steropannerNode.pan.value = +panControl.value;
 panControl.addEventListener("input", () => {
   steropannerNode.pan.value = +panControl.value;
 });
 
 const selectFFTSize: HTMLSelectElement = document.querySelector("#fft-size")!;
+setFFTSize(+selectFFTSize.value);
 selectFFTSize.addEventListener("input", () => {
   setFFTSize(+selectFFTSize.value);
 });
@@ -175,6 +178,7 @@ const updateFrequency = () => {
     (+numeratorControl.value / +denominatorControl.value);
 };
 
+updateFrequency();
 frequencyControl.addEventListener("input", updateFrequency);
 numeratorControl.addEventListener("input", updateFrequency);
 denominatorControl.addEventListener("input", updateFrequency);
