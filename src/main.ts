@@ -178,3 +178,10 @@ const updateFrequency = () => {
 frequencyControl.addEventListener("input", updateFrequency);
 numeratorControl.addEventListener("input", updateFrequency);
 denominatorControl.addEventListener("input", updateFrequency);
+
+const FFTBlendControl: HTMLInputElement =
+  document.querySelector("#fft-smoothing")!;
+FFTBlendControl.value = `${analyzerNode.smoothingTimeConstant}`;
+FFTBlendControl.addEventListener("input", () => {
+  analyzerNode.smoothingTimeConstant = +FFTBlendControl.value;
+});
