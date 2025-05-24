@@ -8,8 +8,10 @@ const track = audioContext.createMediaElementSource(audioElement!);
 
 const oscillator = audioContext.createOscillator();
 oscillator.frequency.value = 440;
+let oscillatorStarted = false;
 
-const gainNode = audioContext.createGain();
+const gainNode = audioContext.createGain(); // This gain node will be for the main audio track
+const oscillatorGainNode = audioContext.createGain(); // This gain node will be for the oscillator
 
 const steropannerNode = audioContext.createStereoPanner();
 
@@ -27,8 +29,8 @@ track
   .connect(audioContext.destination);
 
 oscillator
-  .connect(gainNode)
-  .connect(steropannerNode)
+  .connect(oscillatorGainNode) // Connect oscillator to its dedicated gain node
+  .connect(steropannerNode) // Connect oscillator's gain node to the main chain
   .connect(analyzerNode)
   .connect(audioContext.destination);
 
@@ -106,31 +108,45 @@ draw();
 
 const playbutton = document.querySelector("button");
 
+const volumeControl: HTMLInputElement = document.querySelector("#volume")!;
+const panControl: HTMLInputElement = document.querySelector("#pan")!;
+
+// Initialize oscillator gain to 0 on load (so it doesn't play immediately)
+oscillatorGainNode.gain.value = 0;
+// Initialize main track gain to the volume control value on load
+gainNode.gain.value = +volumeControl.value;
+
 playbutton?.addEventListener("click", () => {
   if (audioContext.state === "suspended") {
     audioContext.resume();
   }
 
   if (playbutton.dataset.playing === "false") {
-    oscillator.start();
+    if (!oscillatorStarted) {
+      oscillator.start();
+      oscillatorStarted = true;
+    }
     playbutton.dataset.playing = "true";
-  } else if (playbutton.dataset.playing === "true") {
-    playbutton.dataset.playing = "false";
+    // On the first play, set the oscillator gain to the current volume control value
+    oscillatorGainNode.gain.value = +volumeControl.value;
+  } else {
+    // On subsequent clicks, toggle the oscillator's gain between 0 and the current volume level
+    if (oscillatorGainNode.gain.value > 0) {
+      // If currently playing, stop by setting gain to 0
+      oscillatorGainNode.gain.value = 0;
+      playbutton.dataset.playing = "false";
+    } else {
+      // If currently stopped (gain 0), play by setting gain to the volume control value
+      oscillatorGainNode.gain.value = +volumeControl.value;
+      playbutton.dataset.playing = "true";
+    }
   }
 });
 
-const volumeControl: HTMLInputElement = document.querySelector("#volume")!;
-
 volumeControl.addEventListener("input", () => {
-  gainNode.gain.value = +volumeControl.value;
+  oscillatorGainNode.gain.value = +volumeControl.value;
 });
-
-const panControl: HTMLInputElement = document.querySelector("#pan")!;
 
 panControl.addEventListener("input", () => {
   steropannerNode.pan.value = +panControl.value;
-});
-
-audioElement?.addEventListener("ended", () => {
-  if (playbutton) playbutton.dataset.playing = "false";
 });
