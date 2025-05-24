@@ -16,3 +16,15 @@
     cursor: pointer;
   }
 }
+
+@layer components {
+  .chip {
+    border: 1px var(--color-neutral-300) solid;
+    height: min-content;
+    width: min-content;
+    text-wrap-mode: nowrap;
+    padding: 8px;
+    border-radius: 10000px;
+    background-color: var(--color-white);
+  }
+}
