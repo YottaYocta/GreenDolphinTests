@@ -7,11 +7,30 @@ const audioElement = document.querySelector("audio");
 const track = audioContext.createMediaElementSource(audioElement!);
 
 const oscillator = audioContext.createOscillator();
+const oscillatorGainNode = audioContext.createGain(); // This gain node will be for the oscillator
+
 oscillator.frequency.value = 440;
 let oscillatorStarted = false;
+let oscillatorIsPlaying = false;
+let oscillatorGain = 0.2;
 
-const gainNode = audioContext.createGain(); // This gain node will be for the main audio track
-const oscillatorGainNode = audioContext.createGain(); // This gain node will be for the oscillator
+const setOscillatorIsPlaying = (isPlaying: boolean) => {
+  if (!oscillatorIsPlaying) {
+    if (!oscillatorStarted) {
+      oscillator.start();
+      oscillatorStarted = true;
+    }
+    oscillatorGainNode.gain.value = oscillatorGain;
+  } else {
+    oscillatorGainNode.gain.value = 0;
+  }
+  oscillatorIsPlaying = isPlaying;
+};
+
+const setOscillatorGain = (gain: number) => {
+  oscillatorGain = gain;
+  if (oscillatorIsPlaying) oscillatorGainNode.gain.value = oscillatorGain;
+};
 
 const steropannerNode = audioContext.createStereoPanner();
 
@@ -22,11 +41,7 @@ analyzerNode.smoothingTimeConstant = 0.85;
 
 analyzerNode.fftSize = 16384 / 2;
 
-track
-  .connect(gainNode)
-  .connect(steropannerNode)
-  .connect(analyzerNode)
-  .connect(audioContext.destination);
+track.connect(analyzerNode).connect(audioContext.destination);
 
 oscillator
   .connect(oscillatorGainNode) // Connect oscillator to its dedicated gain node
@@ -104,47 +119,29 @@ const draw = () => {
 };
 
 draw();
+
 // Event Listeners
 
 const playbutton = document.querySelector("button");
 
 const volumeControl: HTMLInputElement = document.querySelector("#volume")!;
+volumeControl.value = "" + oscillatorGain;
 const panControl: HTMLInputElement = document.querySelector("#pan")!;
 
 // Initialize oscillator gain to 0 on load (so it doesn't play immediately)
 oscillatorGainNode.gain.value = 0;
 // Initialize main track gain to the volume control value on load
-gainNode.gain.value = +volumeControl.value;
 
 playbutton?.addEventListener("click", () => {
   if (audioContext.state === "suspended") {
     audioContext.resume();
   }
 
-  if (playbutton.dataset.playing === "false") {
-    if (!oscillatorStarted) {
-      oscillator.start();
-      oscillatorStarted = true;
-    }
-    playbutton.dataset.playing = "true";
-    // On the first play, set the oscillator gain to the current volume control value
-    oscillatorGainNode.gain.value = +volumeControl.value;
-  } else {
-    // On subsequent clicks, toggle the oscillator's gain between 0 and the current volume level
-    if (oscillatorGainNode.gain.value > 0) {
-      // If currently playing, stop by setting gain to 0
-      oscillatorGainNode.gain.value = 0;
-      playbutton.dataset.playing = "false";
-    } else {
-      // If currently stopped (gain 0), play by setting gain to the volume control value
-      oscillatorGainNode.gain.value = +volumeControl.value;
-      playbutton.dataset.playing = "true";
-    }
-  }
+  setOscillatorIsPlaying(!oscillatorIsPlaying);
 });
 
 volumeControl.addEventListener("input", () => {
-  oscillatorGainNode.gain.value = +volumeControl.value;
+  setOscillatorGain(+volumeControl.value);
 });
 
 panControl.addEventListener("input", () => {

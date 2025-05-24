@@ -23,7 +23,7 @@
         </button>
         <div class="flex flex-col w-48">
           <label for="volume">volume</label>
-          <input type="range" id="volume" name="volume" min="0" max="2" value="1" step="0.01" />
+          <input type="range" id="volume" name="volume" min="0" max="0.4" step="0.01" />
         </div>
         <div class="flex flex-col w-48">
           <label for="pan">pan</label>
@@ -31,7 +31,7 @@
         </div>
         <p id="buffer-length" class="chip"></p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-col gap-2">
         <canvas id="oscilloscope" class="w-full"></canvas>
         <canvas id="frequency" class="w-full"></canvas>
       </div>
