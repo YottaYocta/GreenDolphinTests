@@ -20,6 +20,21 @@
 }
 
 @layer components {
+  .interactable {
+    border: 1px var(--color-neutral-300) solid;
+    height: min-content;
+    width: min-content;
+    text-wrap-mode: nowrap;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-white);
+  }
+
+  .interactable:hover {
+    background-color: var(--color-neutral-50);
+    cursor: pointer;
+  }
+
   .chip {
     border: 1px var(--color-neutral-300) solid;
     height: min-content;

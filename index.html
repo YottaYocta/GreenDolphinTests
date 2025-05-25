@@ -147,6 +147,51 @@
             </div>
           </div>
         </div>
+        <div class="w-full flex flex-col gap-2 card">
+          <div class="flex items-center gap-2">
+            <input
+              type="file"
+              class="interactable"
+              name="file-upload"
+              id="file-upload"
+            />
+            <div class="flex flex-col max-w-48">
+              <label for="waveform-zoom">Zoom</label>
+              <input
+                type="range"
+                id="waveform-zoom"
+                name="waveform-zoom"
+                min="0.5"
+                max="6"
+                value="2"
+                step="0.01"
+                class="w-full"
+              />
+            </div>
+            <div class="flex flex-col max-w-48">
+              <label for="waveform-resolution">resolution</label>
+              <input
+                type="range"
+                id="waveform-resolution"
+                name="waveform-resolution"
+                min="10"
+                max="10000"
+                value="2"
+                step="10"
+                class="w-full"
+              />
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <canvas
+              width="600"
+              height="300"
+              id="waveform"
+              class="w-full"
+            ></canvas>
+          </div>
+        </div>
         <script type="module" src="/src/main.ts"></script>
       </div>
     </div>

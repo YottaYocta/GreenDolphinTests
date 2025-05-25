@@ -110,16 +110,20 @@ const computeNoteName = (pitchIndex: number) => {
 };
 
 const blueAmount = 120;
+const redAmount = 50;
+const greenAmount = 170;
+
+const backgroundFillStyle = "rgb(240 240 240)";
 
 const draw = () => {
   requestAnimationFrame(draw);
   analyzerNode.getByteTimeDomainData(timeDomainData);
 
-  timeDomainCtx.fillStyle = "rgb(240 240 240)";
+  timeDomainCtx.fillStyle = backgroundFillStyle;
   timeDomainCtx.fillRect(0, 0, timeDomainCanvas.width, timeDomainCanvas.height);
 
   timeDomainCtx.lineWidth = 2;
-  timeDomainCtx.strokeStyle = `rgb(50 170 ${blueAmount})`;
+  timeDomainCtx.strokeStyle = `rgb(${redAmount} ${greenAmount} ${blueAmount})`;
 
   timeDomainCtx.beginPath();
 
@@ -143,7 +147,7 @@ const draw = () => {
   timeDomainCtx.stroke();
 
   analyzerNode.getFloatFrequencyData(frequencyData);
-  frequencyCtx.fillStyle = "rgb(240 240 240)";
+  frequencyCtx.fillStyle = backgroundFillStyle;
   frequencyCtx.fillRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
 
   const barWidth = (frequencyCanvas.width / bufferLength) * 8;
@@ -153,7 +157,7 @@ const draw = () => {
     const base = frequencyData[i] + 140;
     const barHeight = Math.sqrt(Math.pow(base * base, base / 100));
 
-    frequencyCtx.fillStyle = `rgb(50 170 ${blueAmount})`;
+    frequencyCtx.fillStyle = `rgb(${redAmount} ${greenAmount} ${blueAmount})`;
     frequencyCtx.fillRect(
       posX,
       frequencyCanvas.height - barHeight / 2,
@@ -189,7 +193,7 @@ const draw = () => {
     } else freqIdx++;
   }
 
-  pitchCtx.fillStyle = "rgb(240 240 240)";
+  pitchCtx.fillStyle = backgroundFillStyle;
   pitchCtx.fillRect(0, 0, pitchCanvas.width, pitchCanvas.height);
 
   const pitchBarWidth = 5;
@@ -201,7 +205,7 @@ const draw = () => {
       const base = ((intensity / pitchWindow) * Math.pow(idx, 1 / 5)) / 2;
       const barHeight = Math.sqrt(Math.pow(base * base, base / 100));
 
-      pitchCtx.fillStyle = `rgb(50 170 ${blueAmount})`;
+      pitchCtx.fillStyle = `rgb(${redAmount} ${greenAmount} ${blueAmount})`;
       pitchCtx.fillRect(
         idx * pitchBarWidth,
         pitchCanvas.height - barHeight / 2,
@@ -209,7 +213,7 @@ const draw = () => {
         barHeight / 2
       );
 
-      pitchCtx.fillStyle = `rgb(50 170 ${blueAmount} / ${Math.pow(
+      pitchCtx.fillStyle = `rgb(${redAmount} ${greenAmount} ${blueAmount} / ${Math.pow(
         Math.max(0, barHeight - 30),
         2
       )}%)`;
@@ -281,4 +285,108 @@ const FFTBlendControl: HTMLInputElement =
 FFTBlendControl.value = `${analyzerNode.smoothingTimeConstant}`;
 FFTBlendControl.addEventListener("input", () => {
   analyzerNode.smoothingTimeConstant = +FFTBlendControl.value;
+});
+
+// file upload
+
+const waveformCanvas: HTMLCanvasElement = document.querySelector("#waveform")!;
+const waveformCtx = waveformCanvas.getContext("2d")!;
+
+let barWidth = 1;
+
+let skip = 100;
+let scrollPositionX = 0;
+
+let audioData: undefined | AudioBuffer;
+
+const updateWaveform = async (data: AudioBuffer) => {
+  const channelHeight = waveformCanvas.height / data.numberOfChannels;
+  waveformCtx.fillStyle = backgroundFillStyle;
+  waveformCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+  waveformCtx.fillStyle = `rgb(${redAmount} ${greenAmount} ${blueAmount})`;
+  for (let i = 0; i < data.numberOfChannels; i++) {
+    const channelData = data.getChannelData(i);
+
+    const subSkip = Math.max(1, Math.floor(skip / 10));
+    for (
+      let j = scrollPositionX;
+      j * skip < channelData.length &&
+      (j - scrollPositionX) * barWidth < waveformCanvas.width;
+      j++
+    ) {
+      let sampleSum = 0;
+      let sampleCount = 0;
+      for (
+        let k = j * skip;
+        k < channelData.length && k < (j + 1) * skip;
+        k += subSkip
+      ) {
+        sampleSum += Math.abs(channelData[k]);
+        sampleCount++;
+      }
+      const sampleIntensity = sampleSum / sampleCount;
+      const barHeight = Math.abs(sampleIntensity) * channelHeight;
+      waveformCtx.fillRect(
+        (j - scrollPositionX) * barWidth,
+        waveformCanvas.height / 2 - barHeight / 2,
+        barWidth,
+        barHeight
+      );
+    }
+  }
+};
+
+const recalculateScroll = () => {
+  if (audioData) {
+    scrollPositionX = Math.min(
+      Math.max(scrollPositionX, 0),
+      audioData.length / skip - waveformCanvas.width / barWidth
+    );
+
+    updateWaveform(audioData);
+  }
+};
+
+waveformCanvas.addEventListener("wheel", (e: WheelEvent) => {
+  if (audioData) {
+    scrollPositionX += e.deltaX;
+    recalculateScroll();
+  }
+});
+
+waveformCanvas.addEventListener("drag", (e: DragEvent) => {
+  if (audioData) {
+    scrollPositionX += e.movementX;
+    recalculateScroll();
+  }
+});
+
+const waveformZoomControl: HTMLInputElement =
+  document.querySelector("#waveform-zoom")!;
+waveformZoomControl.value = `${barWidth}`;
+waveformZoomControl.addEventListener("input", () => {
+  barWidth = +waveformZoomControl.value;
+  recalculateScroll();
+});
+
+const waveformResolutionControl: HTMLInputElement = document.querySelector(
+  "#waveform-resolution"
+)!;
+waveformResolutionControl.value = `${skip}`;
+waveformResolutionControl.addEventListener("input", () => {
+  skip = +waveformResolutionControl.value;
+  recalculateScroll();
+});
+
+const fileInput: HTMLInputElement = document.querySelector("#file-upload")!;
+fileInput.addEventListener("input", () => {
+  const firstFile = fileInput.files?.item(0)!;
+  const fileReader = new FileReader();
+  fileReader.addEventListener("loadend", async () => {
+    audioData = await audioContext.decodeAudioData(
+      fileReader.result! as ArrayBuffer
+    );
+    updateWaveform(audioData);
+  });
+  fileReader.readAsArrayBuffer(firstFile);
 });
