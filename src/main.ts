@@ -70,11 +70,23 @@ const timeDomainCanvas: HTMLCanvasElement = document.getElementById(
   "oscilloscope"
 )! as HTMLCanvasElement;
 const timeDomainCtx = timeDomainCanvas.getContext("2d")!;
+
 const frequencyData = new Float32Array(bufferLength);
 const frequencyCanvas: HTMLCanvasElement = document.getElementById(
   "frequency"
 )! as HTMLCanvasElement;
 const frequencyCtx = frequencyCanvas.getContext("2d")!;
+
+const pitchCanvas: HTMLCanvasElement = document.getElementById(
+  "pitch"
+)! as HTMLCanvasElement;
+const pitchCtx = pitchCanvas.getContext("2d")!;
+
+const QUARTER_STEP = Math.pow(2, 1 / 24);
+
+const computeFrequency = (pitchIndex: number) => {
+  return 440 * Math.pow(2, (1 / 12) * (pitchIndex - 57));
+};
 
 const draw = () => {
   requestAnimationFrame(draw);
@@ -108,7 +120,7 @@ const draw = () => {
   timeDomainCtx.stroke();
 
   analyzerNode.getFloatFrequencyData(frequencyData);
-  frequencyCtx.fillStyle = "rgb(0 0 0)";
+  frequencyCtx.fillStyle = "rgb(256 256 256)";
   frequencyCtx.fillRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
 
   const barWidth = (frequencyCanvas.width / bufferLength) * 8;
@@ -118,7 +130,9 @@ const draw = () => {
     const base = frequencyData[i] + 140;
     const barHeight = Math.sqrt(Math.pow(base * base, base / 100));
 
-    frequencyCtx.fillStyle = `rgb(${Math.floor(barHeight + 100)} 50 50)`;
+    frequencyCtx.fillStyle = `rgb(50 ${
+      Math.floor(barHeight + 100) / 5 + 100
+    } 70)`;
     frequencyCtx.fillRect(
       posX,
       frequencyCanvas.height - barHeight / 2,
@@ -127,6 +141,60 @@ const draw = () => {
     );
     posX += barWidth;
   }
+
+  let pitchIdx = 0;
+  let freqIdx = 0;
+  let freqWindowSize =
+    audioContext.sampleRate / 2 / analyzerNode.frequencyBinCount;
+
+  let pitchData = new Float32Array(1000);
+
+  while (pitchIdx < pitchData.length && freqIdx < bufferLength) {
+    let pitch = computeFrequency(pitchIdx);
+    let pitchStart = pitch / QUARTER_STEP;
+    let pitchEnd = pitch * QUARTER_STEP;
+    let freqStart = freqWindowSize * freqIdx;
+    let freqEnd = freqStart + freqWindowSize;
+
+    let overlap = Math.max(
+      0,
+      Math.min(pitchEnd, freqEnd) - Math.max(pitchStart, freqStart)
+    );
+
+    pitchData[pitchIdx] += overlap * Math.max(0, 140 + frequencyData[freqIdx]);
+
+    if (pitchEnd < freqEnd) {
+      pitchIdx++;
+    } else freqIdx++;
+  }
+
+  pitchCtx.fillStyle = "rgb(256 256 256)";
+  pitchCtx.fillRect(0, 0, pitchCanvas.width, pitchCanvas.height);
+
+  pitchData.forEach((intensity, idx) => {
+    if (intensity > 10) {
+      let pitch = computeFrequency(idx);
+      let pitchWindow = pitch * QUARTER_STEP - pitch / QUARTER_STEP;
+      const base = intensity / pitchWindow;
+      const barHeight = Math.sqrt(Math.pow(base * base, base / 100));
+
+      pitchCtx.fillStyle = `rgb(50 ${Math.floor(barHeight + 100)} 70)`;
+      pitchCtx.fillRect(
+        idx * 2,
+        pitchCanvas.height - barHeight / 2,
+        2,
+        barHeight / 2
+      );
+
+      if (barHeight > 10) {
+        pitchCtx.fillText(
+          `${Math.round(pitch)}`,
+          idx * 2,
+          pitchCanvas.height - barHeight / 2
+        );
+      }
+    }
+  });
 };
 
 draw();
