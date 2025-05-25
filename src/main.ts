@@ -88,15 +88,36 @@ const computeFrequency = (pitchIndex: number) => {
   return 440 * Math.pow(2, (1 / 12) * (pitchIndex - 57));
 };
 
+const computeNoteName = (pitchIndex: number) => {
+  const notes = [
+    "c",
+    "c#",
+    "d",
+    "d#",
+    "e",
+    "f",
+    "f#",
+    "g",
+    "g#",
+    "a",
+    "a#",
+    "b",
+  ];
+
+  const octave = Math.floor(pitchIndex / 12);
+  const noteIndex = pitchIndex % 12;
+  return `${notes[noteIndex]}${octave}`;
+};
+
 const draw = () => {
   requestAnimationFrame(draw);
   analyzerNode.getByteTimeDomainData(timeDomainData);
 
-  timeDomainCtx.fillStyle = "rgb(200 200 200)";
+  timeDomainCtx.fillStyle = "rgb(240 240 240)";
   timeDomainCtx.fillRect(0, 0, timeDomainCanvas.width, timeDomainCanvas.height);
 
   timeDomainCtx.lineWidth = 2;
-  timeDomainCtx.strokeStyle = "rgb(0 0 0)";
+  timeDomainCtx.strokeStyle = "rgb(50 200 70)";
 
   timeDomainCtx.beginPath();
 
@@ -120,7 +141,7 @@ const draw = () => {
   timeDomainCtx.stroke();
 
   analyzerNode.getFloatFrequencyData(frequencyData);
-  frequencyCtx.fillStyle = "rgb(256 256 256)";
+  frequencyCtx.fillStyle = "rgb(240 240 240)";
   frequencyCtx.fillRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
 
   const barWidth = (frequencyCanvas.width / bufferLength) * 8;
@@ -168,31 +189,34 @@ const draw = () => {
     } else freqIdx++;
   }
 
-  pitchCtx.fillStyle = "rgb(256 256 256)";
+  pitchCtx.fillStyle = "rgb(240 240 240)";
   pitchCtx.fillRect(0, 0, pitchCanvas.width, pitchCanvas.height);
+
+  const pitchBarWidth = 5;
 
   pitchData.forEach((intensity, idx) => {
     if (intensity > 10) {
       let pitch = computeFrequency(idx);
       let pitchWindow = pitch * QUARTER_STEP - pitch / QUARTER_STEP;
-      const base = intensity / pitchWindow;
+      const base = ((intensity / pitchWindow) * Math.pow(idx, 1 / 5)) / 2;
       const barHeight = Math.sqrt(Math.pow(base * base, base / 100));
 
       pitchCtx.fillStyle = `rgb(50 ${Math.floor(barHeight + 100)} 70)`;
       pitchCtx.fillRect(
-        idx * 2,
+        idx * pitchBarWidth,
         pitchCanvas.height - barHeight / 2,
-        2,
+        pitchBarWidth,
         barHeight / 2
       );
 
-      if (barHeight > 10) {
-        pitchCtx.fillText(
-          `${Math.round(pitch)}`,
-          idx * 2,
-          pitchCanvas.height - barHeight / 2
-        );
-      }
+      pitchCtx.fillStyle = `rgb(50 ${Math.floor(
+        barHeight + 100
+      )} 70 / ${Math.pow(Math.max(0, barHeight - 30), 2)}%)`;
+      pitchCtx.fillText(
+        `${computeNoteName(idx)}`,
+        idx * pitchBarWidth - pitchBarWidth,
+        pitchCanvas.height - barHeight / 2 - 2
+      );
     }
   });
 };
