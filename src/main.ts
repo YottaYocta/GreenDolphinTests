@@ -338,9 +338,10 @@ const updateWaveform = async (data: AudioBuffer) => {
 
 const recalculateScroll = () => {
   if (audioData) {
+    scrollPositionX = Math.max(0, Math.floor(scrollPositionX));
     scrollPositionX = Math.min(
-      Math.max(scrollPositionX, 0),
-      audioData.length / skip - waveformCanvas.width / barWidth
+      scrollPositionX,
+      Math.floor(audioData.length / skip - waveformCanvas.width / barWidth)
     );
 
     updateWaveform(audioData);
