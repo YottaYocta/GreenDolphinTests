@@ -109,6 +109,8 @@ const computeNoteName = (pitchIndex: number) => {
   return `${notes[noteIndex]}${octave}`;
 };
 
+const blueAmount = 120;
+
 const draw = () => {
   requestAnimationFrame(draw);
   analyzerNode.getByteTimeDomainData(timeDomainData);
@@ -117,7 +119,7 @@ const draw = () => {
   timeDomainCtx.fillRect(0, 0, timeDomainCanvas.width, timeDomainCanvas.height);
 
   timeDomainCtx.lineWidth = 2;
-  timeDomainCtx.strokeStyle = "rgb(50 200 70)";
+  timeDomainCtx.strokeStyle = `rgb(50 170 ${blueAmount})`;
 
   timeDomainCtx.beginPath();
 
@@ -151,9 +153,7 @@ const draw = () => {
     const base = frequencyData[i] + 140;
     const barHeight = Math.sqrt(Math.pow(base * base, base / 100));
 
-    frequencyCtx.fillStyle = `rgb(50 ${
-      Math.floor(barHeight + 100) / 5 + 100
-    } 70)`;
+    frequencyCtx.fillStyle = `rgb(50 170 ${blueAmount})`;
     frequencyCtx.fillRect(
       posX,
       frequencyCanvas.height - barHeight / 2,
@@ -201,7 +201,7 @@ const draw = () => {
       const base = ((intensity / pitchWindow) * Math.pow(idx, 1 / 5)) / 2;
       const barHeight = Math.sqrt(Math.pow(base * base, base / 100));
 
-      pitchCtx.fillStyle = `rgb(50 ${Math.floor(barHeight + 100)} 70)`;
+      pitchCtx.fillStyle = `rgb(50 170 ${blueAmount})`;
       pitchCtx.fillRect(
         idx * pitchBarWidth,
         pitchCanvas.height - barHeight / 2,
@@ -209,9 +209,10 @@ const draw = () => {
         barHeight / 2
       );
 
-      pitchCtx.fillStyle = `rgb(50 ${Math.floor(
-        barHeight + 100
-      )} 70 / ${Math.pow(Math.max(0, barHeight - 30), 2)}%)`;
+      pitchCtx.fillStyle = `rgb(50 170 ${blueAmount} / ${Math.pow(
+        Math.max(0, barHeight - 30),
+        2
+      )}%)`;
       pitchCtx.fillText(
         `${computeNoteName(idx)}`,
         idx * pitchBarWidth - pitchBarWidth,

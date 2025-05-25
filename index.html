@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
+    <title>GreenDolphin Testing Grounds 🛠️</title>
   </head>
   <body class="bg-neutral-50">
     <div id="app" class="flex flex-col items-center">
       <div class="p-8 flex flex-col gap-4 max-w-5xl w-full">
         <div class="card w-full p-4">
           <h1 class="font-bold text-nowrap flex justify-between">
-            <span> Green Dolphin Testing </span>
-            <span class="text-emerald-700">༝﹡˖˟ ⸜₍⁽ˊ꒳ˋ⁾₎⸝ ༝﹡˖˟ </span>
+            <span class="chip"> GreenDolphin Testing Grounds 🛠️ </span>
+            <span class="text-emerald-500 chip">༝﹡˖˟ ⸜₍⁽ˊ꒳ˋ⁾₎⸝ ༝﹡˖˟ </span>
           </h1>
         </div>
         <div class="flex flex-col gap-2 card w-full">
@@ -126,6 +126,12 @@
                   </div>
                 </div>
               </div>
+              <canvas
+                width="600"
+                id="pitch"
+                class="w-full rounded-sm object-contain object-center"
+              ></canvas>
+
               <div
                 class="flex w-full gap-2 flex-col md:flex-row justify-center"
               >
@@ -140,11 +146,6 @@
               </div>
             </div>
           </div>
-          <canvas
-            width="600"
-            id="pitch"
-            class="w-full rounded-sm object-contain object-center"
-          ></canvas>
         </div>
         <script type="module" src="/src/main.ts"></script>
       </div>
