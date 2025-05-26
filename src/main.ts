@@ -46,8 +46,8 @@ const analyzerNode = audioContext.createAnalyser();
 track.connect(analyzerNode).connect(audioContext.destination);
 
 oscillator
-  .connect(oscillatorGainNode) // Connect oscillator to its dedicated gain node
-  .connect(steropannerNode) // Connect oscillator's gain node to the main chain
+  .connect(oscillatorGainNode)
+  .connect(steropannerNode)
   .connect(analyzerNode)
   .connect(audioContext.destination);
 
@@ -236,7 +236,7 @@ draw();
 
 // Event Listeners
 
-const toggleDroneButton = document.querySelector("button");
+const toggleDroneButton = document.querySelector("#toggle-drone")!;
 
 const volumeControl: HTMLInputElement = document.querySelector("#volume")!;
 volumeControl.value = "" + oscillatorGain;
@@ -244,7 +244,7 @@ const panControl: HTMLInputElement = document.querySelector("#pan")!;
 
 oscillatorGainNode.gain.value = 0;
 
-toggleDroneButton?.addEventListener("click", () => {
+toggleDroneButton.addEventListener("click", () => {
   if (audioContext.state === "suspended") {
     audioContext.resume();
   }
@@ -372,13 +372,13 @@ const createWaveform = (
         waveformState.range.end - waveformState.range.start,
         canvasElement
       );
-      waveformState.section.end = Math.min(
-        Math.max(
-          waveformState.section.start,
-          waveformState.range.start + endSample
-        ),
-        waveformState.range.end
-      );
+      const endTarget = waveformState.range.start + endSample;
+      if (endTarget <= waveformState.section.start) {
+        waveformState.section.start = endTarget;
+      }
+      if (endTarget >= waveformState.section.end) {
+        waveformState.section.end = endTarget;
+      }
     }
     renderWaveformAux(waveformState, canvasElement);
   });
@@ -386,7 +386,11 @@ const createWaveform = (
   canvasElement.addEventListener("mouseup", () => {
     waveformState.dragging = false;
     renderWaveformAux(waveformState, canvasElement);
-    console.log(waveformState);
+  });
+
+  canvasElement.addEventListener("mouseleave", () => {
+    waveformState.dragging = false;
+    renderWaveformAux(waveformState, canvasElement);
   });
 
   const updateSize = () => {
@@ -427,8 +431,14 @@ const handleFileChange = () => {
     );
 
     waveformZoomControl.addEventListener("input", () => {
+      const currentRange = state.range.end - state.range.start;
+      const currentCenter = currentRange / 2 + state.range.start;
+      state.range.start = Math.max(
+        0,
+        currentCenter - +waveformZoomControl.value / 2
+      );
       state.range.end = Math.min(
-        state.range.start + +waveformZoomControl.value,
+        currentCenter + +waveformZoomControl.value / 2,
         audioData.length
       );
       auxRenderFunction(state, canvas);

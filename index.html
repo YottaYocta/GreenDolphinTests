@@ -18,7 +18,7 @@
           <div class="flex items-center gap-2 justify-between">
             <input
               type="file"
-              class="interactable"
+              class="interactable max-w-48"
               name="file-upload"
               id="file-upload"
             />
@@ -68,7 +68,12 @@
         <div
           class="flex items-center w-full justify-between card md:flex-row flex-col gap-4 md:gap-2"
         >
-          <button data-playing="false" role="switch" aria-checked="false">
+          <button
+            data-playing="false"
+            role="switch"
+            aria-checked="false"
+            id="toggle-drone"
+          >
             Toggle Drone
           </button>
           <div class="flex gap-2 items-center">
