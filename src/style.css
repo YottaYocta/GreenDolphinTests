@@ -17,6 +17,11 @@
     background-color: var(--color-neutral-50);
     cursor: pointer;
   }
+
+  button:disabled {
+    color: var(--color-neutral-400);
+    background-color: var(--color-neutral-200);
+  }
 }
 
 @layer components {

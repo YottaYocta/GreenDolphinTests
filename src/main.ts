@@ -299,11 +299,25 @@ let scrollPositionX = 0;
 
 let audioData: undefined | AudioBuffer;
 
+let dragging = false;
+let loopSection: undefined | { start: number; end: number };
+const clearButton: HTMLButtonElement =
+  document.querySelector("#clear-selection")!;
+clearButton.disabled = true;
+
+const sampleIndexOfPixel = (pixelX: number) => {
+  return Math.floor(pixelX / barWidth) * skip;
+};
+
+const pixelOfSampleIndex = (sampleIdx: number) => {
+  const skipGroup = sampleIdx / skip;
+  return Math.floor(skipGroup * barWidth - scrollPositionX);
+};
+
 const updateWaveform = async (data: AudioBuffer) => {
   const channelHeight = waveformCanvas.height / data.numberOfChannels;
   waveformCtx.fillStyle = backgroundFillStyle;
   waveformCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
-  waveformCtx.fillStyle = `rgb(${redAmount} ${greenAmount} ${blueAmount})`;
   for (let i = 0; i < data.numberOfChannels; i++) {
     const channelData = data.getChannelData(i);
 
@@ -326,12 +340,62 @@ const updateWaveform = async (data: AudioBuffer) => {
       }
       const sampleIntensity = sampleSum / sampleCount;
       const barHeight = Math.abs(sampleIntensity) * channelHeight;
+      waveformCtx.fillStyle = loopSection
+        ? j * skip >= loopSection.start && j * skip <= loopSection.end
+          ? `rgb(${redAmount} ${greenAmount} ${blueAmount})`
+          : `rgb(${redAmount} ${greenAmount} ${blueAmount} / 50%)`
+        : `rgb(${redAmount} ${greenAmount} ${blueAmount})`;
       waveformCtx.fillRect(
         (j - scrollPositionX) * barWidth,
         waveformCanvas.height / 2 - barHeight / 2,
         barWidth,
         barHeight
       );
+      if (loopSection && Math.abs(j * skip - loopSection.start) < skip) {
+        waveformCtx.fillStyle = "rgb(0 0 0)";
+        waveformCtx.fillRect(
+          (j - scrollPositionX) * barWidth,
+          0,
+          1,
+          waveformCanvas.height
+        );
+
+        waveformCtx.fillText(
+          `sample ${loopSection.start}`,
+          5 + (j - scrollPositionX) * barWidth,
+          10
+        );
+        waveformCtx.fillText(
+          `${
+            Math.trunc((loopSection.start / audioContext.sampleRate) * 100) /
+            100
+          }s`,
+          5 + (j - scrollPositionX) * barWidth,
+          20
+        );
+      }
+      if (loopSection && Math.abs(j * skip - loopSection.end) < skip) {
+        waveformCtx.fillStyle = "rgb(0 0 0)";
+        waveformCtx.fillRect(
+          (j - scrollPositionX) * barWidth,
+          0,
+          1,
+          waveformCanvas.height
+        );
+
+        waveformCtx.fillText(
+          `sample ${loopSection.end}`,
+          5 + (j - scrollPositionX) * barWidth,
+          10
+        );
+        waveformCtx.fillText(
+          `${
+            Math.trunc((loopSection.end / audioContext.sampleRate) * 100) / 100
+          }s`,
+          5 + (j - scrollPositionX) * barWidth,
+          20
+        );
+      }
     }
   }
 };
@@ -361,6 +425,56 @@ waveformCanvas.addEventListener("drag", (e: DragEvent) => {
     recalculateScroll();
   }
 });
+
+waveformCanvas.addEventListener("mousedown", (e: MouseEvent) => {
+  if (audioData) {
+    dragging = true;
+    const sampleIndex = sampleIndexOfPixel(e.offsetX);
+    loopSection = {
+      start: sampleIndex + scrollPositionX * skip,
+      end: sampleIndex + scrollPositionX * skip,
+    };
+    updateWaveform(audioData);
+
+    clearButton.disabled = false;
+  }
+});
+
+waveformCanvas.addEventListener("mousemove", (e: MouseEvent) => {
+  if (dragging && loopSection && audioData) {
+    loopSection.end = Math.max(
+      loopSection.start,
+      sampleIndexOfPixel(e.offsetX) + scrollPositionX * skip
+    );
+    updateWaveform(audioData);
+  }
+});
+
+waveformCanvas.addEventListener("mouseup", () => {
+  dragging = false;
+});
+
+waveformCanvas.addEventListener("mouseleave", () => {
+  dragging = false;
+});
+
+clearButton.addEventListener("click", () => {
+  loopSection = undefined;
+  clearButton.disabled = true;
+  if (audioData) updateWaveform(audioData);
+});
+
+const resizeCanvas = () => {
+  const boundingRect = waveformCanvas.getBoundingClientRect();
+  waveformCanvas.width = boundingRect.width;
+  if (audioData) {
+    updateWaveform(audioData);
+    recalculateScroll();
+  }
+};
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
 const waveformZoomControl: HTMLInputElement =
   document.querySelector("#waveform-zoom")!;
