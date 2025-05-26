@@ -1,5 +1,9 @@
 import "./style.css";
-import { renderWaveform, type WaveformOptions } from "./waveform";
+import {
+  renderWaveform,
+  type WaveformOptions,
+  type WaveformSection,
+} from "./waveform";
 
 const audioContext: AudioContext = new AudioContext();
 
@@ -289,6 +293,18 @@ FFTBlendControl.addEventListener("input", () => {
 });
 
 // file upload
+
+interface WaveformState {
+  data: AudioBuffer;
+  range: WaveformSection;
+  options: WaveformOptions;
+}
+
+type WaveformAuxRenderFunction = (
+  state: WaveformState,
+  canvasElement: HTMLCanvasElement
+) => void;
+
 const waveformCanvas: HTMLCanvasElement = document.querySelector("#waveform")!;
 const waveformZoomControl: HTMLInputElement =
   document.querySelector("#waveform-zoom")!;
@@ -296,40 +312,34 @@ const waveformResolutionControl: HTMLInputElement = document.querySelector(
   "#waveform-resolution"
 )!;
 
-let audioData: undefined | AudioBuffer;
-let sampleOffset = 0;
-let rangeLength = +waveformZoomControl.value;
-let renderoptions: WaveformOptions = {
-  resolution: +waveformResolutionControl.value,
-};
-
-const renderWaveformAux = (data: AudioBuffer) => {
-  renderWaveform(
+const createWaveform = (
+  data: AudioBuffer,
+  canvasElement: HTMLCanvasElement
+): [WaveformState, HTMLCanvasElement, WaveformAuxRenderFunction] => {
+  const waveformState: WaveformState = {
     data,
-    { start: sampleOffset, end: sampleOffset + rangeLength },
-    {
-      resolution: renderoptions.resolution,
-    },
-    waveformCanvas
-  );
+    range: { start: 0, end: data.length },
+    options: { resolution: canvasElement.width },
+  };
+  const renderWaveformAux: WaveformAuxRenderFunction = (
+    state: WaveformState,
+    canvas: HTMLCanvasElement
+  ) => {
+    renderWaveform(state.data, state.range, state.options, canvas);
+  };
+  renderWaveformAux(waveformState, canvasElement);
+
+  waveformCanvas.addEventListener("wheel", (e: WheelEvent) => {
+    const rangeLength = waveformState.range.end - waveformState.range.start;
+    waveformState.range.start = Math.floor(
+      Math.max(0, waveformState.range.start + e.deltaX * (rangeLength / 400))
+    );
+    waveformState.range.end = waveformState.range.start + rangeLength;
+    renderWaveformAux(waveformState, canvasElement);
+  });
+
+  return [waveformState, canvasElement, renderWaveformAux];
 };
-
-waveformZoomControl.addEventListener("input", () => {
-  rangeLength = +waveformZoomControl.value;
-  if (audioData) renderWaveformAux(audioData);
-});
-
-waveformResolutionControl.addEventListener("input", () => {
-  renderoptions.resolution = +waveformResolutionControl.value;
-  if (audioData) renderWaveformAux(audioData);
-});
-
-waveformCanvas.addEventListener("wheel", (e: WheelEvent) => {
-  sampleOffset = Math.floor(
-    Math.max(0, sampleOffset + e.deltaX * (rangeLength / 400))
-  );
-  if (audioData) renderWaveformAux(audioData);
-});
 
 const fileInput: HTMLInputElement = document.querySelector("#file-upload")!;
 
@@ -338,10 +348,24 @@ const handleFileChange = () => {
   const fileReader = new FileReader();
   const fileUrl = URL.createObjectURL(firstFile);
   fileReader.addEventListener("loadend", async () => {
-    audioData = await audioContext.decodeAudioData(
+    const audioData = await audioContext.decodeAudioData(
       fileReader.result! as ArrayBuffer
     );
-    renderWaveformAux(audioData);
+
+    const [state, canvas, auxRenderFunction] = createWaveform(
+      audioData,
+      waveformCanvas
+    );
+
+    waveformZoomControl.addEventListener("input", () => {
+      state.range.end = state.range.start + +waveformZoomControl.value;
+      auxRenderFunction(state, canvas);
+    });
+
+    waveformResolutionControl.addEventListener("input", () => {
+      state.options.resolution = +waveformResolutionControl.value;
+      auxRenderFunction(state, canvas);
+    });
   });
   fileReader.readAsArrayBuffer(firstFile);
   if (audioElement) audioElement.src = fileUrl;
