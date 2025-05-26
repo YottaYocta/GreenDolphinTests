@@ -17,8 +17,15 @@ export const pixelOfSampleIndex = (
   rangeLength: number,
   canvasElement: HTMLCanvasElement
 ) => {
-  const visiblePercentile = sampleIdx / rangeLength;
-  return canvasElement.width * visiblePercentile;
+  return canvasElement.width * (sampleIdx / rangeLength);
+};
+
+export const sampleIndexOfPixel = (
+  pixel: number,
+  rangeLength: number,
+  canvasElement: HTMLCanvasElement
+) => {
+  return Math.floor((pixel / canvasElement.width) * rangeLength);
 };
 
 export const renderWaveform = (
@@ -73,30 +80,31 @@ export const renderWaveform = (
         : waveFillStyle;
       canvasCtx.fillRect(
         ((j - range.start) / samplesPerWave) * waveWidth,
-        canvasElement.height / 2 - waveHeight / 2,
+        channelHeight * i + channelHeight / 2 - waveHeight / 2,
         waveWidth,
         waveHeight
       );
     }
-    if (section) {
-      const startPos = pixelOfSampleIndex(
-        section.start - range.start,
-        rangeLength,
-        canvasElement
-      );
+  }
 
-      const endPos = pixelOfSampleIndex(
-        section.end - range.start,
-        rangeLength,
-        canvasElement
-      );
+  if (section) {
+    const startPos = pixelOfSampleIndex(
+      section.start - range.start,
+      rangeLength,
+      canvasElement
+    );
 
-      canvasCtx.fillStyle = "rgb(0 0 0)";
-      canvasCtx.fillRect(startPos, 0, 1, canvasElement.height);
-      canvasCtx.fillText(`sample ${section.start}`, startPos + 5, 10);
+    const endPos = pixelOfSampleIndex(
+      section.end - range.start,
+      rangeLength,
+      canvasElement
+    );
 
-      canvasCtx.fillRect(endPos, 0, 1, canvasElement.height);
-      canvasCtx.fillText(`sample ${section.end}`, endPos + 5, 10);
-    }
+    canvasCtx.fillStyle = "rgb(0 0 0)";
+    canvasCtx.fillRect(startPos, 0, 1, canvasElement.height);
+    canvasCtx.fillText(`sample ${section.start}`, startPos + 5, 10);
+
+    canvasCtx.fillRect(endPos, 0, 1, canvasElement.height);
+    canvasCtx.fillText(`sample ${section.end}`, endPos + 5, 10);
   }
 };

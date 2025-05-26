@@ -1,6 +1,7 @@
 import "./style.css";
 import {
   renderWaveform,
+  sampleIndexOfPixel,
   type WaveformOptions,
   type WaveformSection,
 } from "./waveform";
@@ -298,19 +299,14 @@ interface WaveformState {
   data: AudioBuffer;
   range: WaveformSection;
   options: WaveformOptions;
+  section?: WaveformSection;
+  dragging: boolean;
 }
 
 type WaveformAuxRenderFunction = (
   state: WaveformState,
   canvasElement: HTMLCanvasElement
 ) => void;
-
-const waveformCanvas: HTMLCanvasElement = document.querySelector("#waveform")!;
-const waveformZoomControl: HTMLInputElement =
-  document.querySelector("#waveform-zoom")!;
-const waveformResolutionControl: HTMLInputElement = document.querySelector(
-  "#waveform-resolution"
-)!;
 
 const createWaveform = (
   data: AudioBuffer,
@@ -320,23 +316,88 @@ const createWaveform = (
     data,
     range: { start: 0, end: data.length },
     options: { resolution: canvasElement.width },
+    dragging: false,
   };
   const renderWaveformAux: WaveformAuxRenderFunction = (
     state: WaveformState,
     canvas: HTMLCanvasElement
   ) => {
-    renderWaveform(state.data, state.range, state.options, canvas);
+    renderWaveform(
+      state.data,
+      state.range,
+      state.options,
+      canvas,
+      state.section
+    );
   };
   renderWaveformAux(waveformState, canvasElement);
 
-  waveformCanvas.addEventListener("wheel", (e: WheelEvent) => {
+  canvasElement.addEventListener("wheel", (e: WheelEvent) => {
     const rangeLength = waveformState.range.end - waveformState.range.start;
-    waveformState.range.start = Math.floor(
-      Math.max(0, waveformState.range.start + e.deltaX * (rangeLength / 400))
-    );
+    const targetStart =
+      waveformState.range.start + e.deltaX * (rangeLength / 400);
+    const targetEnd = targetStart + rangeLength;
+    if (targetEnd > waveformState.data.length) {
+      waveformState.range.start = Math.max(
+        0,
+        waveformState.data.length - rangeLength
+      );
+    } else if (targetStart < 0) {
+      waveformState.range.start = 0;
+    } else {
+      waveformState.range.start = targetStart;
+      e.stopPropagation();
+      e.preventDefault();
+    }
     waveformState.range.end = waveformState.range.start + rangeLength;
     renderWaveformAux(waveformState, canvasElement);
   });
+
+  canvasElement.addEventListener("mousedown", (e: MouseEvent) => {
+    waveformState.dragging = true;
+    const startSample =
+      sampleIndexOfPixel(
+        e.offsetX,
+        waveformState.range.end - waveformState.range.start,
+        canvasElement
+      ) + waveformState.range.start;
+    waveformState.section = { start: startSample, end: startSample };
+    renderWaveformAux(waveformState, canvasElement);
+  });
+
+  canvasElement.addEventListener("mousemove", (e: MouseEvent) => {
+    if (waveformState.dragging && waveformState.section) {
+      const endSample = sampleIndexOfPixel(
+        e.offsetX,
+        waveformState.range.end - waveformState.range.start,
+        canvasElement
+      );
+      waveformState.section.end = Math.min(
+        Math.max(
+          waveformState.section.start,
+          waveformState.range.start + endSample
+        ),
+        waveformState.range.end
+      );
+    }
+    renderWaveformAux(waveformState, canvasElement);
+  });
+
+  canvasElement.addEventListener("mouseup", () => {
+    waveformState.dragging = false;
+    renderWaveformAux(waveformState, canvasElement);
+    console.log(waveformState);
+  });
+
+  const updateSize = () => {
+    canvasElement.width = canvasElement.getBoundingClientRect().width;
+    canvasElement.height = canvasElement.getBoundingClientRect().height;
+    renderWaveformAux(waveformState, canvasElement);
+  };
+
+  window.addEventListener("resize", updateSize);
+
+  updateSize();
 
   return [waveformState, canvasElement, renderWaveformAux];
 };
@@ -352,13 +413,24 @@ const handleFileChange = () => {
       fileReader.result! as ArrayBuffer
     );
 
+    const waveformCanvas: HTMLCanvasElement =
+      document.querySelector("#waveform")!;
+    const waveformZoomControl: HTMLInputElement =
+      document.querySelector("#waveform-zoom")!;
+    const waveformResolutionControl: HTMLInputElement = document.querySelector(
+      "#waveform-resolution"
+    )!;
+
     const [state, canvas, auxRenderFunction] = createWaveform(
       audioData,
       waveformCanvas
     );
 
     waveformZoomControl.addEventListener("input", () => {
-      state.range.end = state.range.start + +waveformZoomControl.value;
+      state.range.end = Math.min(
+        state.range.start + +waveformZoomControl.value,
+        audioData.length
+      );
       auxRenderFunction(state, canvas);
     });
 
@@ -370,6 +442,6 @@ const handleFileChange = () => {
   fileReader.readAsArrayBuffer(firstFile);
   if (audioElement) audioElement.src = fileUrl;
 };
-handleFileChange();
 
 fileInput.addEventListener("input", handleFileChange);
+fileInput.addEventListener("loadeddata", handleFileChange);
