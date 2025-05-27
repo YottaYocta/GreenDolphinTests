@@ -1,5 +1,10 @@
 import "./style.css";
-import { createWaveform } from "./waveform";
+import {
+  createWaveform,
+  renderWaveform,
+  type WaveformSection,
+  type WaveformState,
+} from "./waveform";
 
 const audioContext: AudioContext = new AudioContext();
 
@@ -303,6 +308,8 @@ const handleFileChange = () => {
 
     const waveformCanvas: HTMLCanvasElement =
       document.querySelector("#waveform")!;
+    const auxCanvas: HTMLCanvasElement =
+      document.querySelector("#waveform-aux")!;
     const waveformZoomControl: HTMLInputElement =
       document.querySelector("#waveform-zoom")!;
     const waveformResolutionControl: HTMLInputElement = document.querySelector(
@@ -311,9 +318,34 @@ const handleFileChange = () => {
     const clearSelectionButton: HTMLButtonElement =
       document.querySelector("#clear-selection")!;
 
+    const sectionCallback = (state: WaveformState) => {
+      if (state.section) {
+        const newBuffer = new AudioBuffer({
+          sampleRate: state.data.sampleRate,
+          length: state.section.end - state.section.start,
+          numberOfChannels: state.data.numberOfChannels,
+        });
+        for (let i = 0; i < state.data.numberOfChannels; i++) {
+          const channelData = state.data.getChannelData(i);
+          const dataSubset = channelData.slice(
+            state.section.start,
+            state.section.end
+          );
+          newBuffer.copyToChannel(dataSubset, i);
+        }
+        renderWaveform(
+          newBuffer,
+          { start: 0, end: newBuffer.length },
+          { resolution: 500 },
+          auxCanvas
+        );
+      }
+    };
+
     const [state, canvas, auxRenderFunction] = createWaveform(
       audioData,
-      waveformCanvas
+      waveformCanvas,
+      sectionCallback
     );
 
     waveformZoomControl.addEventListener("input", () => {
