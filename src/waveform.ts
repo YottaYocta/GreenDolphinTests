@@ -108,3 +108,145 @@ export const renderWaveform = (
     canvasCtx.fillText(`sample ${section.end}`, endPos + 5, 10);
   }
 };
+
+export interface WaveformState {
+  data: AudioBuffer;
+  range: WaveformSection;
+  options: WaveformOptions;
+  section?: WaveformSection;
+  dragging: boolean;
+}
+
+export type WaveformAuxRenderFunction = (
+  state: WaveformState,
+  canvasElement: HTMLCanvasElement
+) => void;
+
+export const createWaveform = (
+  data: AudioBuffer,
+  canvasElement: HTMLCanvasElement
+): [WaveformState, HTMLCanvasElement, WaveformAuxRenderFunction] => {
+  const waveformState: WaveformState = {
+    data,
+    range: { start: 0, end: data.length },
+    options: { resolution: canvasElement.width },
+    dragging: false,
+  };
+  const renderWaveformAux: WaveformAuxRenderFunction = (
+    state: WaveformState,
+    canvas: HTMLCanvasElement
+  ) => {
+    renderWaveform(
+      state.data,
+      state.range,
+      state.options,
+      canvas,
+      state.section
+    );
+  };
+  renderWaveformAux(waveformState, canvasElement);
+
+  canvasElement.addEventListener("wheel", (e: WheelEvent) => {
+    const rangeLength = waveformState.range.end - waveformState.range.start;
+    e.stopPropagation();
+    e.preventDefault();
+
+    if ((Math.abs(e.deltaX) + 0.001) / (Math.abs(e.deltaY) + 0.001) > 0.5) {
+      const targetStart =
+        waveformState.range.start + e.deltaX * (rangeLength / 400);
+      const targetEnd = targetStart + rangeLength;
+      if (targetEnd > waveformState.data.length) {
+        waveformState.range.start = Math.max(
+          0,
+          waveformState.data.length - rangeLength
+        );
+      } else if (targetStart < 0) {
+        waveformState.range.start = 0;
+      } else {
+        waveformState.range.start = Math.floor(targetStart);
+      }
+      waveformState.range.end = waveformState.range.start + rangeLength;
+    } else {
+      const currentRange = waveformState.range.end - waveformState.range.start;
+      const before =
+        sampleIndexOfPixel(e.offsetX, currentRange, canvasElement) /
+        currentRange;
+      const after = 1 - before;
+
+      const targetRange = Math.max(
+        2,
+        Math.min(
+          waveformState.data.length,
+          currentRange * (1 + -e.deltaY / 1000)
+        )
+      );
+
+      const targetBefore = targetRange * before;
+      const targetAfter = targetRange * after;
+
+      const currentTarget =
+        sampleIndexOfPixel(e.offsetX, currentRange, canvasElement) +
+        waveformState.range.start;
+      waveformState.range.start = Math.floor(
+        Math.max(0, currentTarget - targetBefore)
+      );
+      waveformState.range.end = Math.floor(
+        Math.min(currentTarget + targetAfter, waveformState.data.length)
+      );
+    }
+
+    renderWaveformAux(waveformState, canvasElement);
+  });
+
+  canvasElement.addEventListener("mousedown", (e: MouseEvent) => {
+    waveformState.dragging = true;
+    const startSample =
+      sampleIndexOfPixel(
+        e.offsetX,
+        waveformState.range.end - waveformState.range.start,
+        canvasElement
+      ) + waveformState.range.start;
+    waveformState.section = { start: startSample, end: startSample };
+    renderWaveformAux(waveformState, canvasElement);
+  });
+
+  canvasElement.addEventListener("mousemove", (e: MouseEvent) => {
+    if (waveformState.dragging && waveformState.section) {
+      const endSample = sampleIndexOfPixel(
+        e.offsetX,
+        waveformState.range.end - waveformState.range.start,
+        canvasElement
+      );
+      const endTarget = waveformState.range.start + endSample;
+      if (endTarget <= waveformState.section.start) {
+        waveformState.section.start = endTarget;
+      }
+      if (endTarget >= waveformState.section.end) {
+        waveformState.section.end = endTarget;
+      }
+    }
+    renderWaveformAux(waveformState, canvasElement);
+  });
+
+  canvasElement.addEventListener("mouseup", () => {
+    waveformState.dragging = false;
+    renderWaveformAux(waveformState, canvasElement);
+  });
+
+  canvasElement.addEventListener("mouseleave", () => {
+    waveformState.dragging = false;
+    renderWaveformAux(waveformState, canvasElement);
+  });
+
+  const updateSize = () => {
+    canvasElement.width = canvasElement.getBoundingClientRect().width;
+    canvasElement.height = canvasElement.getBoundingClientRect().height;
+    renderWaveformAux(waveformState, canvasElement);
+  };
+
+  window.addEventListener("resize", updateSize);
+
+  updateSize();
+
+  return [waveformState, canvasElement, renderWaveformAux];
+};

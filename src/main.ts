@@ -1,10 +1,5 @@
 import "./style.css";
-import {
-  renderWaveform,
-  sampleIndexOfPixel,
-  type WaveformOptions,
-  type WaveformSection,
-} from "./waveform";
+import { createWaveform } from "./waveform";
 
 const audioContext: AudioContext = new AudioContext();
 
@@ -294,117 +289,6 @@ FFTBlendControl.addEventListener("input", () => {
 });
 
 // file upload
-
-interface WaveformState {
-  data: AudioBuffer;
-  range: WaveformSection;
-  options: WaveformOptions;
-  section?: WaveformSection;
-  dragging: boolean;
-}
-
-type WaveformAuxRenderFunction = (
-  state: WaveformState,
-  canvasElement: HTMLCanvasElement
-) => void;
-
-const createWaveform = (
-  data: AudioBuffer,
-  canvasElement: HTMLCanvasElement
-): [WaveformState, HTMLCanvasElement, WaveformAuxRenderFunction] => {
-  const waveformState: WaveformState = {
-    data,
-    range: { start: 0, end: data.length },
-    options: { resolution: canvasElement.width },
-    dragging: false,
-  };
-  const renderWaveformAux: WaveformAuxRenderFunction = (
-    state: WaveformState,
-    canvas: HTMLCanvasElement
-  ) => {
-    renderWaveform(
-      state.data,
-      state.range,
-      state.options,
-      canvas,
-      state.section
-    );
-  };
-  renderWaveformAux(waveformState, canvasElement);
-
-  canvasElement.addEventListener("wheel", (e: WheelEvent) => {
-    const rangeLength = waveformState.range.end - waveformState.range.start;
-    const targetStart =
-      waveformState.range.start + e.deltaX * (rangeLength / 400);
-    const targetEnd = targetStart + rangeLength;
-    if (targetEnd > waveformState.data.length) {
-      waveformState.range.start = Math.max(
-        0,
-        waveformState.data.length - rangeLength
-      );
-    } else if (targetStart < 0) {
-      waveformState.range.start = 0;
-    } else {
-      waveformState.range.start = targetStart;
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    waveformState.range.end = waveformState.range.start + rangeLength;
-    renderWaveformAux(waveformState, canvasElement);
-  });
-
-  canvasElement.addEventListener("mousedown", (e: MouseEvent) => {
-    waveformState.dragging = true;
-    const startSample =
-      sampleIndexOfPixel(
-        e.offsetX,
-        waveformState.range.end - waveformState.range.start,
-        canvasElement
-      ) + waveformState.range.start;
-    waveformState.section = { start: startSample, end: startSample };
-    renderWaveformAux(waveformState, canvasElement);
-  });
-
-  canvasElement.addEventListener("mousemove", (e: MouseEvent) => {
-    if (waveformState.dragging && waveformState.section) {
-      const endSample = sampleIndexOfPixel(
-        e.offsetX,
-        waveformState.range.end - waveformState.range.start,
-        canvasElement
-      );
-      const endTarget = waveformState.range.start + endSample;
-      if (endTarget <= waveformState.section.start) {
-        waveformState.section.start = endTarget;
-      }
-      if (endTarget >= waveformState.section.end) {
-        waveformState.section.end = endTarget;
-      }
-    }
-    renderWaveformAux(waveformState, canvasElement);
-  });
-
-  canvasElement.addEventListener("mouseup", () => {
-    waveformState.dragging = false;
-    renderWaveformAux(waveformState, canvasElement);
-  });
-
-  canvasElement.addEventListener("mouseleave", () => {
-    waveformState.dragging = false;
-    renderWaveformAux(waveformState, canvasElement);
-  });
-
-  const updateSize = () => {
-    canvasElement.width = canvasElement.getBoundingClientRect().width;
-    canvasElement.height = canvasElement.getBoundingClientRect().height;
-    renderWaveformAux(waveformState, canvasElement);
-  };
-
-  window.addEventListener("resize", updateSize);
-
-  updateSize();
-
-  return [waveformState, canvasElement, renderWaveformAux];
-};
 
 const fileInput: HTMLInputElement = document.querySelector("#file-upload")!;
 
