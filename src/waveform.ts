@@ -103,9 +103,19 @@ export const renderWaveform = (
     canvasCtx.fillStyle = "rgb(0 0 0)";
     canvasCtx.fillRect(startPos, 0, 1, canvasElement.height);
     canvasCtx.fillText(`sample ${section.start}`, startPos + 5, 10);
+    canvasCtx.fillText(
+      `${Math.trunc((section.start / data.sampleRate) * 100) / 100}s`,
+      startPos + 5,
+      20
+    );
 
     canvasCtx.fillRect(endPos, 0, 1, canvasElement.height);
     canvasCtx.fillText(`sample ${section.end}`, endPos + 5, 10);
+    canvasCtx.fillText(
+      `${Math.trunc((section.end / data.sampleRate) * 100) / 100}s`,
+      endPos + 5,
+      20
+    );
   }
 };
 

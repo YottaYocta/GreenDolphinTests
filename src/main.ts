@@ -308,6 +308,8 @@ const handleFileChange = () => {
     const waveformResolutionControl: HTMLInputElement = document.querySelector(
       "#waveform-resolution"
     )!;
+    const clearSelectionButton: HTMLButtonElement =
+      document.querySelector("#clear-selection")!;
 
     const [state, canvas, auxRenderFunction] = createWaveform(
       audioData,
@@ -330,6 +332,11 @@ const handleFileChange = () => {
 
     waveformResolutionControl.addEventListener("input", () => {
       state.options.resolution = +waveformResolutionControl.value;
+      auxRenderFunction(state, canvas);
+    });
+
+    clearSelectionButton.addEventListener("click", () => {
+      state.section = undefined;
       auxRenderFunction(state, canvas);
     });
   });
