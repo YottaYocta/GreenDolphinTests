@@ -135,7 +135,7 @@ export type WaveformAuxRenderFunction = (
 export const createWaveform = (
   data: AudioBuffer,
   canvasElement: HTMLCanvasElement,
-  selectionCallback: (state: WaveformState) => void = () => {}
+  sectionCallback: (state: WaveformState) => void = () => {}
 ): [WaveformState, HTMLCanvasElement, WaveformAuxRenderFunction] => {
   const waveformState: WaveformState = {
     data,
@@ -241,13 +241,13 @@ export const createWaveform = (
 
   canvasElement.addEventListener("mouseup", () => {
     waveformState.dragging = false;
-    selectionCallback(waveformState);
+    sectionCallback(waveformState);
     renderWaveformAux(waveformState, canvasElement);
   });
 
   canvasElement.addEventListener("mouseleave", () => {
     waveformState.dragging = false;
-    selectionCallback(waveformState);
+    sectionCallback(waveformState);
     renderWaveformAux(waveformState, canvasElement);
   });
 

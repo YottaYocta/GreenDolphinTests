@@ -1,10 +1,5 @@
 import "./style.css";
-import {
-  createWaveform,
-  renderWaveform,
-  type WaveformSection,
-  type WaveformState,
-} from "./waveform";
+import { createWaveform, renderWaveform, type WaveformState } from "./waveform";
 
 const audioContext: AudioContext = new AudioContext();
 
@@ -320,6 +315,7 @@ const handleFileChange = () => {
 
     const sectionCallback = (state: WaveformState) => {
       if (state.section) {
+        clearSelectionButton.disabled = false;
         const newBuffer = new AudioBuffer({
           sampleRate: state.data.sampleRate,
           length: state.section.end - state.section.start,
@@ -339,6 +335,8 @@ const handleFileChange = () => {
           { resolution: 500 },
           auxCanvas
         );
+      } else {
+        clearSelectionButton.disabled = true;
       }
     };
 
@@ -347,6 +345,24 @@ const handleFileChange = () => {
       waveformCanvas,
       sectionCallback
     );
+
+    let bufferNode: undefined | AudioBufferSourceNode;
+
+    const playPauseButton: HTMLButtonElement =
+      document.querySelector("#play-pause")!;
+    playPauseButton.disabled = false;
+    playPauseButton.addEventListener("click", () => {
+      if (playPauseButton.dataset.playing === "false") {
+        playPauseButton.dataset.playing = "true";
+        bufferNode = audioContext.createBufferSource();
+        bufferNode.buffer = state.data;
+        bufferNode.connect(analyzerNode).connect(audioContext.destination);
+        bufferNode.start();
+      } else {
+        playPauseButton.dataset.playing = "false";
+        bufferNode?.stop();
+      }
+    });
 
     waveformZoomControl.addEventListener("input", () => {
       const currentRange = state.range.end - state.range.start;
@@ -369,6 +385,7 @@ const handleFileChange = () => {
 
     clearSelectionButton.addEventListener("click", () => {
       state.section = undefined;
+      sectionCallback(state);
       auxRenderFunction(state, canvas);
     });
   });

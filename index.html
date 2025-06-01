@@ -48,22 +48,30 @@
                 class="w-full"
               />
             </div>
-            <button id="clear-selection">Clear Selection</button>
+            <button id="clear-selection" disabled>Clear Selection</button>
           </div>
 
-          <div class="w-full">
+          <div class="w-full flex flex-col gap-2">
             <canvas
               width="600"
               height="100"
               id="waveform"
-              class="w-full h-[100px]"
+              class="w-full h-[100px] border border-neutral-300 rounded-sm"
             ></canvas>
-            <canvas
-              width="300"
-              height="100"
-              id="waveform-aux"
-              class="w-full h-[100px]"
-            ></canvas>
+            <div class="flex items-center justify-center gap-2 w-full">
+              <button id="play-pause" data-playing="false" disabled>
+                Play/Pause
+              </button>
+            </div>
+            <div class="w-full flex gap-2 items-center justify-between">
+              <div class="w-full"></div>
+              <canvas
+                width="200"
+                height="100"
+                id="waveform-aux"
+                class="w-min h-min border border-neutral-300 rounded-sm"
+              ></canvas>
+            </div>
           </div>
         </div>
         <div class="flex flex-col gap-2 card w-full">
