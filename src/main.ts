@@ -204,6 +204,7 @@ const draw = () => {
       let pitch = computeFrequency(idx);
       let pitchWindow = pitch * QUARTER_STEP - pitch / QUARTER_STEP;
       const base = ((intensity / pitchWindow) * Math.pow(idx, 1 / 5)) / 2;
+      console.log(base);
       const barHeight = Math.sqrt(Math.pow(base * base, base / 100));
 
       pitchCtx.fillStyle = `rgb(${redAmount} ${greenAmount} ${blueAmount})`;
